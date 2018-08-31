@@ -1,0 +1,404 @@
+<?php
+use common\assets\ToastAsset;
+use kartik\grid\GridView;
+use kartik\widgets\ActiveForm;
+use yii\bootstrap\Modal;
+use yii\helpers\Html;
+use yii\web\View;
+
+/**
+ * @var $model \common\models\Content
+ * @var $profile \common\models\ContentProfile
+ * @var $dataProvider
+ */
+ToastAsset::register($this);
+ToastAsset::config($this, [
+    'positionClass' => ToastAsset::POSITION_BOTTOM_RIGHT
+]);
+//\common\assets\ModalAsset::register($this);
+$js = <<<JS
+    function loadModalData(url){
+
+
+    $("#content-profile-view").find(".modal-body").html('');
+      $.ajax({
+        type     :'GET',
+        cache    : false,
+        url  :url,
+       success  : function(response) {
+       if(response.success){
+                 $("#content-profile-view").find(".modal-body").html(response.data);
+
+            }else{
+         }
+
+        }
+        });
+
+    }
+function loadUpdateModalData(url){
+
+
+    $('#content-profile-update').on('hidden.bs.modal', function (event) {
+    jQuery.pjax.reload({container:'#profile-grid-pjax'});
+    });
+
+    $("#content-profile-update").find(".modal-body").html('');
+      $.ajax({
+        type     :'GET',
+        cache    : false,
+        url  :url,
+       success  : function(response) {
+       if(response.success){
+                 $("#content-profile-update").find(".modal-body").html(response.data);
+
+            }else{
+         }
+
+        }
+        });
+
+}
+   function openModal(){
+    $('#modal_profile_forms').modal({
+        backdrop: "static",
+        keyboard:false
+
+    });
+   }
+
+    function deleteProfile(data){
+        var allow = confirm("Bạn có chắc chắn muốn xóa profile này không");
+        if(allow){
+            var url = jQuery(data).attr('href');
+            jQuery.post(url)
+            .done(function(result) {
+                if(result.success == true){
+                    toastr.success(result.message);
+                    jQuery.pjax.reload({container:'#profile-grid-pjax'});
+                }else{
+                    toastr.error(result.message);
+                }
+            })
+            .fail(function(xhr, textStatus, errorThrown) {
+                console.log(xhr);
+                toastr.error(xhr.responseText);
+            });
+        }
+        return false;
+    }
+JS;
+$this->registerJs($js, View::POS_END);
+
+
+/**
+ * Xu ly khi form stream value create submit
+ */
+$formID = 'profile-form';
+$js = <<<JS
+// get the form id and set the event
+jQuery('#{$formID}').on('beforeSubmit', function(e) {
+    \$form = jQuery('#{$formID}');
+   $.post(
+        \$form.attr("action"), // serialize Yii2 form
+        \$form.serialize()
+    )
+        .done(function(result) {
+            if(result.success){
+                toastr.success(result.message);
+                jQuery.pjax.reload({container:'#profile-grid-pjax'});
+                $("#modal_profile_forms").modal("hide");
+            }else{
+                toastr.error(result.message);
+            }
+        })
+        .fail(function() {
+            toastr.error("server error");
+        });
+    return false;
+}).on('submit', function(e){
+    e.preventDefault();
+});
+JS;
+$this->registerJs($js);
+
+?>
+
+
+    <!-- start modal-->
+<?php
+\yii\bootstrap\Modal::begin([
+    'header' => 'PROFILE DETAIL',
+    'closeButton' => ['label' => 'Cancel'],
+    'options' => ['id' => 'content-profile-view'],
+    'size' => \yii\bootstrap\Modal::SIZE_DEFAULT
+]);
+?>
+    <div class="modal-body">
+
+
+    </div>
+
+<?php \yii\bootstrap\Modal::end(); ?>
+    <!--end modal create-->
+
+
+    <!-- start modal-->
+<?php
+\yii\bootstrap\Modal::begin([
+    'header' => 'PROFILE UPDATE',
+    'closeButton' => ['label' => 'Cancel'],
+    'options' => ['id' => 'content-profile-update'],
+    'size' => \yii\bootstrap\Modal::SIZE_DEFAULT
+]);
+?>
+    <div class="modal-body">
+
+
+    </div>
+
+<?php \yii\bootstrap\Modal::end(); ?>
+    <!--end modal create-->
+
+    <div class="modal fade" id="modal_profile_forms" tabindex="-1" role="basic" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                    <h4 class="modal-title">Profile</h4>
+                </div>
+                <div class="modal-body">
+
+                    <?php $form = ActiveForm::begin([
+                        'id' => $formID,
+                        'type' => ActiveForm::TYPE_HORIZONTAL,
+                        'action' => \yii\helpers\Url::to(['content-profile/create']),
+                        'fullSpan' => 8,
+                        'formConfig' => [
+                            'type' => ActiveForm::TYPE_HORIZONTAL,
+                            'labelSpan' => 3,
+                            'deviceSize' => ActiveForm::SIZE_SMALL,
+                        ],
+                    ]); ?>
+
+                    <?= Html::activeHiddenInput($profile, 'content_id'); ?>
+                    <?= $form->field($profile, 'url')->textInput(['maxlength' => 150, 'class' => 'input-circle']) ?>
+                    <?= $form->field($profile, 'width')->textInput(['maxlength' => 200, 'class' => 'input-circle']) ?>
+                    <?= $form->field($profile, 'height')->textInput(['class' => 'input-circle']) ?>
+                    <?= $form->field($profile, 'bitrate')->textInput(['class' => 'input-circle']) ?>
+                    <?= $form->field($profile, 'type')->dropDownList(\common\models\ContentProfile::$types, ['class' => 'input-circle']) ?>
+                    <?= $form->field($profile, 'quality')->dropDownList(
+                        \common\models\ContentProfile::$stream_quality, ['class' => 'input-circle']
+                    ) ?>
+                    <?= $form->field($profile, 'status')->dropDownList(
+                        \common\models\ContentProfile::$stream_status, ['class' => 'input-circle']
+                    ) ?>
+
+                    <div class="row">
+                        <div class="col-md-offset-3 col-md-9">
+                            <?= Html::submitButton($profile->isNewRecord ? 'Create' : 'Update',
+                                ['class' => $profile->isNewRecord ? 'btn btn-success' : 'btn btn-primary']) ?>
+                        </div>
+                    </div>
+                    <?php ActiveForm::end(); ?>
+                </div>
+
+
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+
+
+
+
+<?php
+/**
+echo Html::button('Create profile',
+    [
+        //'data-toggle' => 'modal',
+        // 'data-backdrop' => "static",
+        //'data-keyboard' => "false",
+        // 'data-target' => '#modal_profile_forms',
+        'class' => 'btn btn-primary',
+        'onclick' => 'openModal()'
+    ]);
+ * */
+?>
+    <p></p>
+
+<?= GridView::widget([
+    'id' => 'profile-grid',
+    'dataProvider' => $profileProvider,
+    'responsive' => true,
+    'pjax' => true,
+    'hover' => true,
+    'columns' => [
+//        [
+//            'class' => 'kartik\grid\ExpandRowColumn',
+//            'value' => function ($model, $key, $index, $column) {
+//                return GridView::ROW_COLLAPSED;
+//            },
+//            'detail' => function ($model, $key, $index, $column) {
+//                return Yii::$app->controller->renderPartial('_expand-profile-details', ['model' => $model]);
+//            },
+//        ],
+        [
+            'class' => 'kartik\grid\EditableColumn',
+            'attribute' => 'url',
+            'refreshGrid' => true,
+            'editableOptions' => function ($model, $key, $index) {
+                /* @var $model \common\models\ContentProfile */
+                return [
+                    'header' => 'URL',
+                    'size' => 'md',
+                    'inputType' => \kartik\editable\Editable::INPUT_TEXT,
+                    'formOptions' => [
+                        'action' => \yii\helpers\Url::to([
+                            'content-profile/editable',
+                            'profile_id' => $model->id
+                        ]),
+                        'enableClientValidation' => false,
+                        'enableAjaxValidation' => true,
+                    ],
+                ];
+            },
+        ],
+        [
+            'header' => 'Bitrate (kbps)',
+            'class' => 'kartik\grid\EditableColumn',
+            'attribute' => 'bitrate',
+            'refreshGrid' => true,
+            'editableOptions' => function ($model, $key, $index) {
+                /* @var $model \common\models\ContentProfile */
+                return [
+                    'header' => 'Bitrate (kbps)',
+                    'size' => 'md',
+                    'inputType' => \kartik\editable\Editable::INPUT_TEXT,
+                    'formOptions' => [
+                        'action' => \yii\helpers\Url::to([
+                            'content-profile/editable',
+                            'profile_id' => $model->id
+                        ]),
+                        'enableClientValidation' => false,
+                        'enableAjaxValidation' => true,
+                    ],
+                ];
+            }
+        ],
+        [
+            'class' => 'kartik\grid\EditableColumn',
+            'attribute' => 'status',
+            'refreshGrid' => true,
+            'editableOptions' => function ($model, $key, $index) {
+                return [
+                    'header' => 'Status',
+                    'size' => 'md',
+                    'displayValueConfig' => \common\models\ContentProfile::$stream_status,
+                    'inputType' => \kartik\editable\Editable::INPUT_DROPDOWN_LIST,
+                    'placement' => \kartik\popover\PopoverX::ALIGN_LEFT,
+                    'data' => \common\models\ContentProfile::$stream_status,
+                    'formOptions' => [
+                        'action' => \yii\helpers\Url::to([
+                            'content-profile/editable',
+                            'profile_id' => $model->id
+                        ]),
+                        'enableClientValidation' => false,
+                        'enableAjaxValidation' => true,
+                    ],
+                ];
+            },
+        ],
+        [
+            'class' => 'kartik\grid\EditableColumn',
+            'attribute' => 'type',
+            'refreshGrid' => true,
+            'editableOptions' => function ($model, $key, $index) {
+                return [
+                    'header' => 'Type',
+                    'size' => 'md',
+                    'displayValueConfig' => \common\models\ContentProfile::$types,
+                    'inputType' => \kartik\editable\Editable::INPUT_DROPDOWN_LIST,
+                    'placement' => \kartik\popover\PopoverX::ALIGN_LEFT,
+                    'data' => \common\models\ContentProfile::$types,
+                    'formOptions' => [
+                        'action' => \yii\helpers\Url::to([
+                            'content-profile/editable',
+                            'profile_id' => $model->id
+                        ]),
+                        'enableClientValidation' => false,
+                        'enableAjaxValidation' => true,
+                    ],
+                ];
+            },
+        ],
+        [
+            'class' => 'kartik\grid\EditableColumn',
+            'attribute' => 'quality',
+            'refreshGrid' => true,
+            'editableOptions' => function ($model, $key, $index) {
+                return [
+                    'header' => 'Quality',
+                    'size' => 'md',
+                    'displayValueConfig' => \common\models\ContentProfile::$stream_quality,
+                    'inputType' => \kartik\editable\Editable::INPUT_DROPDOWN_LIST,
+                    'placement' => \kartik\popover\PopoverX::ALIGN_LEFT,
+                    'data' => \common\models\ContentProfile::$stream_quality,
+                    'formOptions' => [
+                        'action' => \yii\helpers\Url::to([
+                            'content-profile/editable',
+                            'profile_id' => $model->id
+                        ]),
+                        'enableClientValidation' => false,
+                        'enableAjaxValidation' => true,
+                    ],
+                ];
+            },
+            'filterType' => GridView::FILTER_SELECT2,
+            'filter' => \common\models\ContentProfile::$stream_quality,
+            'filterWidgetOptions' => [
+                'pluginOptions' => ['allowClear' => true],
+            ],
+            'filterInputOptions' => ['placeholder' => 'Tất cả'],
+        ],
+//        [
+//            'attribute' => '',
+//            'format' => 'raw',
+//            'width' =>'30%',
+//            'value' => function ($model, $key, $index, $widget) {
+//
+//                $urlAjax = Yii::$app->urlManager->createUrl(['/content-profile/view-modal-data', 'id' => $model->id]);
+//                $urlAjaxUpdate = Yii::$app->urlManager->createUrl(['/content-profile/update-modal-data', 'id' => $model->id]);
+//                /**
+//                 * @var $model \common\models\Content
+//                 */
+//                $res = Html::a('Show details', '#content-profile-view',
+//                    [
+//                        'data-toggle' => 'modal',
+//                        'data-backdrop' => "static",
+//                        'data-keyboard' => "false",
+//                        'onclick' => "js:loadModalData('$urlAjax');",
+//                        'class'=>'btn btn-primary'
+//                    ]);
+//                $res .= '&nbsp;&nbsp;&nbsp;&nbsp;';
+//                $res .= Html::a('Update', '#content-profile-update',
+//                    [
+//                        'data-toggle' => 'modal',
+//                        'data-backdrop' => "static",
+//                        'data-keyboard' => "false",
+//                        'onclick' => "js:loadUpdateModalData('$urlAjaxUpdate');",
+//                        'class'=>'btn btn-info'
+//                    ]);
+//                $res .= '&nbsp;&nbsp;&nbsp;&nbsp;';
+//                $urlDelete = \yii\helpers\Url::to(['content-profile/delete', 'id' => $model->id]);
+//                $res .= Html::a('Delete', $urlDelete, ['onclick' => 'return deleteProfile(this);','class'=>'btn btn-danger']);;
+//
+//                return $res;
+//            },
+//
+//
+//        ],
+ 
+    ],
+]); ?>

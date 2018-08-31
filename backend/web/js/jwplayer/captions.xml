@@ -1,0 +1,62 @@
+<plugin>
+	<title>Captions</title>
+	<filename>captions.swf</filename>
+	<version>2</version>
+	<compatibility>Compatible with 5.0</compatibility>
+	<author>LongTail Video</author>
+	<description>This plugin plays closed captions with a video.</description>
+	<href>http://developer.longtailvideo.com/trac/browser/plugins/captions</href>
+
+	<flashvars>
+		<flashvar>
+			<name>back</name>
+			<default>false</default>
+			<description>Set this to "true" to show a semitransparent backdrop that makes the captions more readable.</description>
+		</flashvar>
+		<flashvar>
+			<name>file</name>
+			<default/>
+			<description>Location of the captions in (TimedText or SRT format) to display.</description>
+		</flashvar>
+		<flashvar>
+			<name>state</name>
+			<default>true</default>
+			<description>Set this to false to turn off the captions by default.</description>
+		</flashvar>
+		<flashvar>
+			<name>files</name>
+			<default/>
+			<description>Comma-separated list of multiple captions tracks.</description>
+		</flashvar>
+		<flashvar>
+			<name>labels</name>
+			<default/>
+			<description>Comma-separated list of labels for multiple tracks.</description>
+		</flashvar>
+		<flashvar>
+			<name>color</name>
+			<default>FFF</default>
+		</flashvar>
+		<flashvar>
+			<name>fontFamily</name>
+			<default>Arial,sans-serif</default>
+		</flashvar>
+		<flashvar>
+			<name>fontSize</name>
+			<default>14</default>
+		</flashvar>
+		<flashvar>
+			<name>fontStyle</name>
+			<default>normal</default>
+		</flashvar>
+		<flashvar>
+			<name>fontWeight</name>
+			<default>normal</default>
+		</flashvar>
+		<flashvar>
+			<name>textDecoration</name>
+			<default>none</default>
+		</flashvar>
+	</flashvars>
+
+</plugin>
