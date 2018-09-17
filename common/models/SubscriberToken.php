@@ -9,7 +9,6 @@ use Yii;
  *
  * @property integer $id
  * @property integer $subscriber_id
- * @property string $package_name
  * @property string $msisdn
  * @property string $token
  * @property integer $type
@@ -45,9 +44,8 @@ class SubscriberToken extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['subscriber_id','package_name', 'token'], 'required'],
+            [['subscriber_id', 'token'], 'required'],
             [['subscriber_id', 'type', 'created_at', 'expired_at', 'status', 'channel'], 'integer'],
-            [['package_name'], 'string', 'max' => 255],
             [['msisdn'], 'string', 'max' => 20],
             [['token'], 'string', 'max' => 100],
             [['ip_address'], 'string', 'max' => 45],
@@ -63,7 +61,6 @@ class SubscriberToken extends \yii\db\ActiveRecord
         return [
             'id' => Yii::t('app', 'ID'),
             'subscriber_id' => Yii::t('app', 'Subscriber ID'),
-            'package_name' => Yii::t('app', 'Package Name'),
             'msisdn' => Yii::t('app', 'Msisdn'),
             'token' => Yii::t('app', 'Token'),
             'type' => Yii::t('app', 'Type'),
@@ -90,9 +87,9 @@ class SubscriberToken extends \yii\db\ActiveRecord
      * @return SubscriberToken|null
      * @throws \Exception
      */
-    public static function generateToken($subscriber_id, $channel,$package_name){
+    public static function generateToken($subscriber_id, $channel){
         /** @var  $st SubscriberToken*/
-        $st = SubscriberToken::find()->where(['subscriber_id' => $subscriber_id,'channel'=>$channel,'package_name'=>$package_name])->one();
+        $st = SubscriberToken::find()->where(['subscriber_id' => $subscriber_id,'channel'=>$channel])->one();
         if($st){
             $st->token = Yii::$app->security->generateRandomString();
             $st->created_at = time();
@@ -106,7 +103,6 @@ class SubscriberToken extends \yii\db\ActiveRecord
         }else{
             $s = new SubscriberToken();
             $s->subscriber_id = $subscriber_id;
-            $s->package_name = $package_name;
             $s->token = Yii::$app->security->generateRandomString();
             $s->created_at = time();
             $s->expired_at = time() + Yii::$app->params['api.AccessTokenExpire'];
@@ -121,76 +117,11 @@ class SubscriberToken extends \yii\db\ActiveRecord
         }
     }
 
-    public static function _generateToken($wifi_password, $subscriber_id, $msisdn){
-        /**
-         *
-         * HungNV edit: 15/3/2016
-         *
-         * 1. get subscriber
-         * 2. if exist
-         *      yes: check token expried?
-         *          yes: -> set new expried -> save -> return
-         *          no -> return
-         *      no:
-         *          create new Subscriber_token, expired -> save -> return
-         */
-        /**
-         * old code block
-         */
-
-        /*
-        $subscriber_token = new SubscriberToken();
-        $subscriber_token->subscriber_id = $subscriber_id;
-        $subscriber_token->token = Yii::$app->security->generateRandomString();
-        $subscriber_token->created_at = time();
-        $subscriber_token->expired_at = time() + Yii::$app->params['api.AccessTokenExpire'];
-        $subscriber_token->type = $wifi_password;
-        $subscriber_token->msisdn = $msisdn;
-        $subscriber_token->status = self::STATUS_ACTIVE;
-//        $subscriber_token->channel = $channel;
-        $subscriber_token->ip_address = Yii::$app->request->getUserIP();
-
-        if($subscriber_token->save()){
-            return $subscriber_token->token;
-        }
-        return null;
-        */
-
-        /**
-         * new code block
-         */
-        $subscriber = SubscriberToken::find()->andWhere(['subscriber_id' => $subscriber_id])
-            ->andWhere(['msisdn' => $msisdn])
-            ->one();
-        if(isset($subscriber)){
-            if($subscriber->expired_at <= time()){
-                $subscriber->expired_at = time() + Yii::$app->params['api.AccessTokenExpire'];
-                $subscriber->update();
-            }
-            return $subscriber->token;
-        }else{
-            $subscriber_token = new SubscriberToken();
-            $subscriber_token->subscriber_id =  $subscriber_id;
-            $subscriber_token->msisdn = $msisdn;
-            $subscriber_token->token = Yii::$app->security->generateRandomString();
-            $subscriber_token->created_at = time();
-            $subscriber_token->expired_at = time() + Yii::$app->params['api.AccessTokenExpire'];
-            $subscriber_token->type = $wifi_password;
-            $subscriber_token->status = self::STATUS_ACTIVE;
-//            $subscriber_token->channel = $channel;
-            if($subscriber_token->save()){
-                return $subscriber_token->token;
-            }else{
-                return null;
-            }
-        }
-    }
-
     public static function findByAccessToken($token)
     {
         return SubscriberToken::find()
             ->andWhere(['status' => SubscriberToken::STATUS_ACTIVE, 'token' => $token])
-//            ->andWhere("expired_at is null OR expired_at > :time", [":time" => time()])
+            ->andWhere("expired_at is null OR expired_at > :time", [":time" => time()])
             ->one();
     }
 

@@ -12,7 +12,7 @@ class m150520_040002_init_db_schema extends Migration
     public function up()
     {
         echo "\ninitial schema\n";
-        $dbSchema = dirname((dirname(__DIR__))) . "/db/tvod2.sql";
+        $dbSchema = dirname((dirname(__DIR__))) . "/db/iq.sql";
         if (!file_exists($dbSchema)) {
             echo "***** DB schema not found: " . $dbSchema . " *****\n";
             return false;
@@ -58,15 +58,4 @@ class m150520_040002_init_db_schema extends Migration
 
         return false;
     }
-    
-    /*
-    // Use safeUp/safeDown to run migration code within a transaction
-    public function safeUp()
-    {
-    }
-    
-    public function safeDown()
-    {
-    }
-    */
 }

@@ -26,7 +26,6 @@ class HttpBearerAuthExtend extends AuthMethod
     public function authenticate($user, $request, $response)
     {
         $authHeader = $request->getHeaders()->get('Authorization');
-//        $ip = $request->getHeaders()->get('x-real-ip');
         $ip = \Yii::$app->request->getUserIP();
         if ($authHeader !== null && preg_match('/^Bearer\s+(.*?)$/', $authHeader, $matches)) {
             $identity = $user->loginByAccessToken($matches[1], get_class($this));
@@ -36,18 +35,9 @@ class HttpBearerAuthExtend extends AuthMethod
                 $subscriber = Subscriber::findOne($identity->getId());
 //                \Yii::warning($ip);
                 if ($subscriber->ip_address != $ip) {
-                    if ($subscriber->type == Subscriber::TYPE_NSX) {
-                        if (!in_array($ip, \Yii::$app->params['factory_ip'])) {
-                            $subscriber->type = Subscriber::TYPE_USER;
-                            $subscriber->register_at = time();
-                        }
-                    }
-
                     $subscriber->ip_address = $ip;
                     $subscriber->save();
                 }
-
-
             }
             return $identity;
         }

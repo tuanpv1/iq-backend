@@ -194,7 +194,7 @@ class SubscriberActivity extends \yii\db\ActiveRecord
      * @param int $status
      * @return array
      */
-    public static function createSubscriberActivity($subscriber, $description, $channel_type, $site_id, $action = SubscriberActivity::ACTION_LOGIN, $status = SubscriberActivity::STATUS_SUCCESS, $device_id = null, $type_subscriber=null){
+    public static function createSubscriberActivity($subscriber, $description, $channel_type, $action = SubscriberActivity::ACTION_LOGIN, $status = SubscriberActivity::STATUS_SUCCESS, $device_id = null, $type_subscriber=null){
         $res = [];
 
         $r = new SubscriberActivity();
@@ -204,7 +204,6 @@ class SubscriberActivity extends \yii\db\ActiveRecord
         $r->action = $action;
         $r->type = $action;
         $r->channel = $channel_type;
-        $r->site_id = $site_id;
         $r->status = $status;
         $r->device_id = $device_id;
 

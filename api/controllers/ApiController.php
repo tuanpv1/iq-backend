@@ -2,34 +2,25 @@
 
 namespace api\controllers;
 
-use api\helpers\authentications\IdentifyMsisdn;
 use api\models\HttpBearerAuthExtend;
-use common\helpers\CUtils;
+use common\models\ApiCredential;
 use common\models\Languages;
-use common\models\Site;
-use common\models\SiteApiCredential;
 use Yii;
 use yii\caching\TagDependency;
 use yii\filters\auth\CompositeAuth;
-use yii\filters\auth\HttpBearerAuth;
 use yii\rest\Controller;
 use yii\web\Response;
 use yii\web\UnauthorizedHttpException;
 
-//use common\models\UserAccessToken;
-
 /**
  * Base controller for API app
- * @author Nguyen Chi Thuc (gthuc.nguyen@gmail.com)
  */
 class ApiController extends Controller
 {
-    const HEADER_API_KEY = "X-Api-Key";
-    const HEADER_SECRET_KEY = "X-Secret-Key";
-    const HEADER_PACKAGE_NAME = "X-PackageName";
-    const HEADER_FINGERPRINT = "X-Fingerprint";
-
-    const HEADER_LANGUAGE = "X-Language";
+    const HEADER_API_KEY = "TP-Api-Key";
+    const HEADER_LANGUAGE = "TP-Language";
+    const HEADER_SECRET_KEY = "TP-Secret-Key";
+    const HEADER_FINGERPRINT = "TP-Fingerprint";
 
     public $serializer = [
         'class' => 'yii\rest\Serializer',
@@ -84,9 +75,9 @@ class ApiController extends Controller
 
         $key = Yii::$app->params['key_cache']['ApiKey'] . $api_key;
         $credential = $cache->get($key);
-        if($credential === false){
-            /* @var $credential SiteApiCredential */
-            $credential = SiteApiCredential::findCredentialByApiKey($api_key);
+        if ($credential === false) {
+            /* @var $credential ApiCredential */
+            $credential = ApiCredential::findCredentialByApiKey($api_key);
             $cache->set($key, $credential, Yii::$app->params['time_expire_cache'], new TagDependency(['tags' => Yii::$app->params['key_cache']['ApiKey']]));
         }
 
@@ -94,53 +85,21 @@ class ApiController extends Controller
         if (!$credential) {
             throw new UnauthorizedHttpException(Yii::t('app', 'Không tồn tại API key'));
         }
-
-//        CUtils::showLogTime( CUtils::getMilliseconds() - $time, 'Execute time 1: API Controller: SiteApiCredential');
-//        $time =  CUtils::getMilliseconds();
-
-        $key = Yii::$app->params['key_cache']['SiteID'] . $credential->site_id;
-        $this->site = $cache->get($key);
-        if($this->site === false){
-            /* @var $credential SiteApiCredential */
-//            $this->site = Site::findOne(['id' => $credential->site_id, 'status' => Site::STATUS_ACTIVE]);
-            $site = Site::findOne(['id' => $credential->site_id]);
-            if($site->status != Site::STATUS_REMOVE){
-                $this->site = $site;
-            }
-            $cache->set($key, $this->site, Yii::$app->params['time_expire_cache'], new TagDependency(['tags' => Yii::$app->params['key_cache']['SiteID']]));
-        }
-
-//        $this->site = Site::findOne(['id' => $credential->site_id, 'status' => Site::STATUS_ACTIVE]);
-
-//        CUtils::showLogTime( CUtils::getMilliseconds() - $time, 'Execute time 2: API Controller: SiteFindOne');
-//        $time =  CUtils::getMilliseconds();
-
-        if (!$this->site) {
-            throw new UnauthorizedHttpException(Yii::t('app', 'Không tồn tại Service Provider'));
-        }
         /** Set site_id để dùng cho tiện */
-        Yii::$app->params['site_id'] = $this->site->id;
         switch ($credential->type) {
-            case SiteApiCredential::TYPE_WEB_APPLICATION:
+            case ApiCredential::TYPE_IOS_APPLICATION:
                 break;
-            case SiteApiCredential::TYPE_IOS_APPLICATION:
-                break;
-            case SiteApiCredential::TYPE_WINDOW_PHONE_APPLICATION:
+            case ApiCredential::TYPE_WINDOW_PHONE_APPLICATION:
                 $secret_key = Yii::$app->request->headers->get(static::HEADER_SECRET_KEY);
                 if (!$secret_key || ($secret_key != $credential->client_secret)) {
                     throw new UnauthorizedHttpException(Yii::t('app', 'Không tồn tại API key'));
                 }
                 break;
-            case SiteApiCredential::TYPE_ANDROID_APPLICATION:
-                $packageName = Yii::$app->request->headers->get(static::HEADER_PACKAGE_NAME);
+            case ApiCredential::TYPE_ANDROID_APPLICATION:
                 $fingerprint = Yii::$app->request->headers->get(static::HEADER_FINGERPRINT);
-//                if (!$packageName
-//                    || ($packageName != $credential->package_name)
-//                    || !$fingerprint
-//                    || ($fingerprint != $credential->certificate_fingerprint)
-//                ) {
-//                    throw new UnauthorizedHttpException(Yii::t('app','PackageName không hợp lệ hoặc chưa được cấp phép'));
-//                }
+                if (!$fingerprint || ($fingerprint != $credential->certificate_fingerprint)) {
+                    throw new UnauthorizedHttpException(Yii::t('app', 'Finger print không hợp lệ hoặc chưa được cấp phép'));
+                }
                 break;
             default:
                 break;
