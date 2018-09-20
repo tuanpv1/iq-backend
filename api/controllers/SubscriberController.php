@@ -151,13 +151,16 @@ class SubscriberController extends ApiController
         }
     }
 
-    public function actionLogin($username, $password, $mac_address, $channel = Subscriber::CHANNEL_TYPE_ANDROID, $authen_type = Subscriber::AUTHEN_TYPE_MAC_ADDRESS)
+    public function actionLogin($username, $password, $device_model, $device_id, $channel = Subscriber::CHANNEL_TYPE_ANDROID, $authen_type = Subscriber::AUTHEN_TYPE_MAC_ADDRESS)
     {
         /** validate input */
         if (empty($username)) {
             throw new InvalidValueException($this->replaceParam(Message::getNullValueMessage(), [Yii::t('app', 'Tên đăng nhập')]));
         }
-        if (empty($mac_address)) {
+        if (empty($device_id)) {
+            throw new InvalidValueException($this->replaceParam(Message::getNullValueMessage(), [Yii::t('app', 'Mac')]));
+        }
+        if (empty($device_model)) {
             throw new InvalidValueException($this->replaceParam(Message::getNullValueMessage(), [Yii::t('app', 'Mac')]));
         }
 
