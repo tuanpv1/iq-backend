@@ -54,56 +54,56 @@ class ApiController extends Controller
      */
     public function beforeAction($action)
     {
-        $cache = Yii::$app->cache;
+//        $cache = Yii::$app->cache;
 
 //        CUtils::showLogTime( CUtils::getMilliseconds(), 'Start time: API Controller');
 //        $time =  CUtils::getMilliseconds();
 
-        $language = Yii::$app->request->headers->get(static::HEADER_LANGUAGE);
-
-        if (!array_key_exists($language, Languages::$language)) {
-            throw new UnauthorizedHttpException(Yii::t('app', 'Không hỗ trợ ngôn ngữ : ') . $language);
-        }
-        $this->language = $language;
-        Yii::$app->language = $this->language;
-
-        /** Sửa lại phần beforeAction vì code đang sai */
-        $api_key = Yii::$app->request->headers->get(static::HEADER_API_KEY);
-        if (!$api_key) {
-            throw new UnauthorizedHttpException(Yii::t('app', 'Thiếu API KEY'));
-        }
-
-        $key = Yii::$app->params['key_cache']['ApiKey'] . $api_key;
-        $credential = $cache->get($key);
-        if ($credential === false) {
-            /* @var $credential ApiCredential */
-            $credential = ApiCredential::findCredentialByApiKey($api_key);
-            $cache->set($key, $credential, Yii::$app->params['time_expire_cache'], new TagDependency(['tags' => Yii::$app->params['key_cache']['ApiKey']]));
-        }
-
-
-        if (!$credential) {
-            throw new UnauthorizedHttpException(Yii::t('app', 'Không tồn tại API key'));
-        }
-        /** Set site_id để dùng cho tiện */
-        switch ($credential->type) {
-            case ApiCredential::TYPE_IOS_APPLICATION:
-                break;
-            case ApiCredential::TYPE_WINDOW_PHONE_APPLICATION:
-                $secret_key = Yii::$app->request->headers->get(static::HEADER_SECRET_KEY);
-                if (!$secret_key || ($secret_key != $credential->client_secret)) {
-                    throw new UnauthorizedHttpException(Yii::t('app', 'Không tồn tại API key'));
-                }
-                break;
-            case ApiCredential::TYPE_ANDROID_APPLICATION:
-                $fingerprint = Yii::$app->request->headers->get(static::HEADER_FINGERPRINT);
-                if (!$fingerprint || ($fingerprint != $credential->certificate_fingerprint)) {
-                    throw new UnauthorizedHttpException(Yii::t('app', 'Finger print không hợp lệ hoặc chưa được cấp phép'));
-                }
-                break;
-            default:
-                break;
-        }
+////        $language = Yii::$app->request->headers->get(static::HEADER_LANGUAGE);
+////
+////        if (!array_key_exists($language, Languages::$language)) {
+////            throw new UnauthorizedHttpException(Yii::t('app', 'Không hỗ trợ ngôn ngữ : ') . $language);
+////        }
+////        $this->language = $language;
+////        Yii::$app->language = $this->language;
+////
+////        /** Sửa lại phần beforeAction vì code đang sai */
+////        $api_key = Yii::$app->request->headers->get(static::HEADER_API_KEY);
+////        if (!$api_key) {
+////            throw new UnauthorizedHttpException(Yii::t('app', 'Thiếu API KEY'));
+////        }
+////
+////        $key = Yii::$app->params['key_cache']['ApiKey'] . $api_key;
+////        $credential = $cache->get($key);
+////        if ($credential === false) {
+////            /* @var $credential ApiCredential */
+////            $credential = ApiCredential::findCredentialByApiKey($api_key);
+////            $cache->set($key, $credential, Yii::$app->params['time_expire_cache'], new TagDependency(['tags' => Yii::$app->params['key_cache']['ApiKey']]));
+////        }
+////
+////
+////        if (!$credential) {
+////            throw new UnauthorizedHttpException(Yii::t('app', 'Không tồn tại API key'));
+////        }
+//        /** Set site_id để dùng cho tiện */
+//        switch ($credential->type) {
+//            case ApiCredential::TYPE_IOS_APPLICATION:
+//                break;
+//            case ApiCredential::TYPE_WINDOW_PHONE_APPLICATION:
+//                $secret_key = Yii::$app->request->headers->get(static::HEADER_SECRET_KEY);
+//                if (!$secret_key || ($secret_key != $credential->client_secret)) {
+//                    throw new UnauthorizedHttpException(Yii::t('app', 'Không tồn tại API key'));
+//                }
+//                break;
+//            case ApiCredential::TYPE_ANDROID_APPLICATION:
+//                $fingerprint = Yii::$app->request->headers->get(static::HEADER_FINGERPRINT);
+//                if (!$fingerprint || ($fingerprint != $credential->certificate_fingerprint)) {
+//                    throw new UnauthorizedHttpException(Yii::t('app', 'Finger print không hợp lệ hoặc chưa được cấp phép'));
+//                }
+//                break;
+//            default:
+//                break;
+//        }
 //        CUtils::showLogTime( CUtils::getMilliseconds() - $time, 'Execute time 3: API Controller: End');
 //        CUtils::showLogTime( CUtils::getMilliseconds());
 
